@@ -2,29 +2,29 @@
 
 # Card Class
 class Card
-  attr_writer :state
+  attr_accessor :state, :used, :points, :suite
   def initialize(pnts, suit, isused)
-    @used = false
-    @points = pnts
-    @suite = suit
-    @used = isused
+    self.used = false
+    self.points = pnts
+    self.suite = suit
+    self.used = isused
   end
 
-  def getpoints
-    return @points
-  end
+  # def getpoints
+  #   return @points
+  # end
 
-  def getsuite
-    return @suite
-  end
+  # def getsuite
+  #   return @suite
+  # end
 
-  def isused
-    return @used
-  end
+  # def isused
+  #   return @used
+  # end
 
-  def setused(state)
-    @used = state
-  end
+  # def setused(state)
+  #   @used = state
+  # end
 
 end
 # Deck Class
@@ -48,9 +48,9 @@ class Deck
   def getcard
 
     @deck.each do |d|
-      if d.isused == false
+      if d.used == false
 
-        d.setused true
+        d.used = true
         return d
       end
     end
@@ -103,134 +103,190 @@ class Deck
   end
 end
 
-# Person Class
-class Person
+class Hand
 
-  def initialize(personname)
-    @name = personname
+  def initialize
+
     @points = 0
     @cards = []
     @haveace = false
   end
 
-  def getname
-    return @name
-  end
-
   def getcard(anothercard)
+
     @cards.push anothercard
-    if anothercard.getpoints == 'jack' ||
-      anothercard.getpoints == 'queen' ||
-      anothercard.getpoints == 'king'
-    @points = @points.to_i + 10
-  elsif anothercard.getpoints == 'Ace'
-    @haveace = true
-  else
-    @points = @points.to_i + anothercard.getpoints.to_i
+
+    if anothercard.points == 'jack' ||
+
+      anothercard.points == 'queen' ||
+      anothercard.points == 'king'
+      @points = @points.to_i + 10
+
+    elsif anothercard.points == 'Ace'
+
+      @haveace = true
+
+    else
+
+    @points = @points.to_i + anothercard.points.to_i
+
     end
   end
 
   def getpoints
     if @haveace == true
+
       if @points > 21 || (@points + 11) > 21
+
         temppoints = @points + 1
       else
         temppoints = @points + 11
       end
+
       return temppoints
+
     else
+
       return @points
     end
   end
+
+  def to_s
+
+    @cards.each do |c|
+      if self.name == 'dealer'
+        puts "Dealer has the #{c.points} of #{c.suite}"
+      else
+        puts "You got the #{c.points} of #{c.suite}"
+      end
+    end
+
+  end
+
 end
 
-@deck = Deck.new
+# Person Class
+class Person < Hand
+  attr_accessor :name
 
-print 'Hi! Welcome to Blackjack!  What''s your name? '
+end
 
-name = gets.chomp!
+class BlackJack
+  def initialize
 
-player = Person.new name
-dealer = Person.new 'dealer'
+    @deck = Deck.new
+    @player = Person.new
+    @dealer = Person.new
+    @dealer.name = 'dealer'
 
-puts "the #{dealer.getname} is shuffling the cards"
+  end
 
-@deck.shuffle
+  def play
+    welcomeplayer
+    setupgame
+    offermorecards
+    dealersturn
+    determinewinner
+  end
 
-puts "The #{dealer.getname} is dealing the cards"
+  private
+  def welcomeplayer
+    print 'Hi! Welcome to Blackjack!  What''s your name? '
+    @player.name = gets.chomp!
 
-card1 = @deck.getcard
-dcard1 = @deck.getcard
-card2 = @deck.getcard
-dcard2 = @deck.getcard
+  end
 
-puts "You got the #{card1.getpoints} of #{card1.getsuite}"
-puts "you also got the #{card2.getpoints} of #{card2.getsuite}"
+  def setupgame
+    puts "the #{@dealer.name} is shuffling the cards"
+    @deck.shuffle
+    puts "The #{@dealer.name} is dealing the cards"
 
-player.getcard card1
-dealer.getcard dcard1
-player.getcard card2
-dealer.getcard dcard2
+    @player.getcard @deck.getcard
+    @dealer.getcard @deck.getcard
+    @player.getcard @deck.getcard
+    @dealer.getcard @deck.getcard
 
-anothercard = 'y'
+    @player.to_s
 
-while anothercard == 'y'
+  end
 
-  print "you now have #{player.getpoints}"
-  puts ' points do you want another card? (y/n)'
-  anothercard = gets.chomp!
+  def offermorecards
+    anothercard = 'y'
 
-  if anothercard == 'y'
+    while anothercard == 'y'
 
-    curcard = @deck.getcard
-    player.getcard curcard
-    puts 'The dealer hands you a card'
-    print "you turn it over and find it's the #{curcard.getpoints} "
-    puts " of #{curcard.getsuite}"
+      print "you now have #{@player.getpoints}"
+      puts ' points do you want another card? (y/n)'
+      anothercard = gets.chomp!
 
-    if player.getpoints > 21
+      if anothercard == 'y'
 
-      puts "You went over 21 with #{player.getpoints} points"
-      break
+        curcard = @deck.getcard
+        @player.getcard curcard
+        puts 'The dealer hands you a card'
+        print "you turn it over and find it's the #{curcard.points} "
+        puts " of #{curcard.suite}"
+
+        if @player.getpoints > 21
+
+          puts "You went over 21 with #{@player.getpoints} points"
+          break
+
+        end
+      end
+    end
+  end
+
+  def dealersturn
+    puts 'The dealer turns over his cards'
+    @dealer.to_s
+
+
+    while
+      @dealer.getpoints <= 17
+
+      puts 'he then grabs a card from the deck for himself'
+      curcard = @deck.getcard
+      @dealer.getcard @deck.getcard
+      print "he draws a #{curcard.points} of #{curcard.suite}"
+      puts  " for a total of #{@dealer.getpoints} points"
+    end
+  end
+
+  def determinewinner
+    puts "dealer has #{@dealer.getpoints} and you have #{@player.getpoints}"
+
+    if @dealer.getpoints > 21 && @player.getpoints > 21
+
+      puts 'A Bust!  Both were over!'
+
+
+    elsif  @dealer.getpoints == @player.getpoints
+
+      puts 'It was a tie! No one wins'
+
+    elsif @dealer.getpoints == 21
+      puts "Sorry #{@player.name}, You Lose!"
+
+    elsif (@player.getpoints > @dealer.getpoints && @player.getpoints <= 21) ||
+      (@dealer.getpoints > 21 && @player.getpoints <= 21)
+
+      puts "Congratulations #{@player.name}!!!!  You win!!!!!"
+
+    else
+
+      puts "Sorry #{@player.name}, You Lose!"
 
     end
   end
 end
 
-puts 'The dealer turns over his cards'
-puts "He has a #{dcard1.getpoints} of #{dcard1.getsuite}"
-puts "He has a #{dcard2.getpoints} of #{dcard2.getsuite}"
-
-while dealer.getpoints <= 17
-
-  puts 'he then grabs a card from the deck for himself'
-  curcard = @deck.getcard
-  dealer.getcard @deck.getcard
-  print "he draws a #{curcard.getpoints} of #{curcard.getsuite}"
-  puts  " for a total of #{dealer.getpoints} points"
-end
-
-puts "dealer has #{dealer.getpoints} and you have #{player.getpoints}"
-
-if dealer.getpoints > 21 && player.getpoints > 21
-
-  puts 'A Bust!  Both were over!'
+bj = BlackJack.new
+bj.play
 
 
-elsif  dealer.getpoints == player.getpoints
-
-  puts 'It was a tie! No one wins'
-
-elsif dealer.getpoints == 21
-  puts "Sorry #{player.getname}, You Lose!"
-
-elsif (player.getpoints > dealer.getpoints && player.getpoints <= 21) ||
-  (dealer.getpoints > 21 && player.getpoints <= 21)
-
-  puts "Congratulations #{player.getname}!!!!  You win!!!!!"
-
-else
 
 
-end
+
+
 
